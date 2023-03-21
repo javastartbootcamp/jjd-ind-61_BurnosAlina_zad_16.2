@@ -3,6 +3,8 @@ package pl.javastart.task;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -16,35 +18,51 @@ public class Main {
         LocalDateTime dateAndTime = getDateAndTime(scanner);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         System.out.println("Czas lokalny: " + dateAndTime.format(formatter));
+        List<ZonedDateTime> zones = new ArrayList<>();
         ZonedDateTime polandTime = ZonedDateTime.of(dateAndTime, ZoneId.of("Europe/Warsaw"));
+        zones.add(polandTime);
         ZonedDateTime utcTime = polandTime.withZoneSameInstant(ZoneId.of("UTC"));
+        zones.add(utcTime);
         ZonedDateTime londonTime = polandTime.withZoneSameInstant(ZoneId.of("Europe/London"));
+        zones.add(londonTime);
         ZonedDateTime laTime = polandTime.withZoneSameInstant(ZoneId.of("America/Los_Angeles"));
+        zones.add(laTime);
         ZonedDateTime sydneyTime = polandTime.withZoneSameInstant(ZoneId.of("Australia/Sydney"));
-        System.out.println("UTC: " + utcTime.format(formatter));
-        System.out.println("Londyn: " + londonTime.format(formatter));
-        System.out.println("Los Angeles: " + laTime.format(formatter));
-        System.out.println("Sydney: " + sydneyTime.format(formatter));
+        zones.add(sydneyTime);
+        printTimeInZones(zones, formatter);
     }
 
     private LocalDateTime getDateAndTime(Scanner scanner) {
-        LocalDateTime dateTime;
+        LocalDateTime dateTime = null;
         System.out.println("Podaj datę:");
         String dateAndTime = scanner.nextLine();
-        DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        DateTimeFormatter formatter3 = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-        try {
-            dateTime = LocalDateTime.parse(dateAndTime, formatter1);
-        } catch (DateTimeParseException e) {
+        List<DateTimeFormatter> dateTimeFormatters = new ArrayList<>();
+        List<DateTimeFormatter> dateFormatters = new ArrayList<>();
+        dateTimeFormatters.add(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        dateFormatters.add(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        dateTimeFormatters.add(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"));
+        for (DateTimeFormatter formatter : dateTimeFormatters) {
             try {
-                LocalDate date = LocalDate.parse(dateAndTime, formatter2);
-                LocalTime time = LocalTime.of(00, 00, 00);
-                dateTime = LocalDateTime.of(date, time);
-            } catch (DateTimeParseException f) {
-                dateTime = LocalDateTime.parse(dateAndTime, formatter3);
+                dateTime = LocalDateTime.parse(dateAndTime, formatter);
+                break;
+            } catch (DateTimeParseException e) {
+            }
+            for (DateTimeFormatter dateTimeFormatter : dateFormatters) {
+                try {
+                    LocalDate date = LocalDate.parse(dateAndTime, dateTimeFormatter);
+                    LocalTime time = LocalTime.of(00, 00, 00);
+                    dateTime = LocalDateTime.of(date, time);
+                    break;
+                } catch (DateTimeParseException e) {
+                }
             }
         }
         return dateTime;
+    }
+
+    private void printTimeInZones(List<ZonedDateTime> zones, DateTimeFormatter formatter) {
+        for (ZonedDateTime zone : zones) {
+            System.out.println(zone.getZone() + ": " + zone.format(formatter));
+        }
     }
 }
