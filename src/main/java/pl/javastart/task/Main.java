@@ -4,18 +4,15 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-
-    private static final String UTC_ID = "UTC";
-    private static final String LONDON_ID = "Europe/London";
-    private static final String LOS_ANGELES_ID = "America/Los_Angeles";
-    private static final String SYDNEY_ID = "Australia/Sydney";
-
-    private static final String DATE_TIME_PATTERN1 = "yyyy-MM-dd HH:mm:ss";
-    private static final String DATE_TIME_PATTERN2 = "dd.MM.yyyy HH:mm:ss";
+    public static final List<String> DATE_TIME_FORMATTERS = Arrays.asList(
+            "yyyy-MM-dd HH:mm:ss", "dd.MM.yyyy HH:mm:ss"
+    );
+    private static final DateTimeFormatter OUTPUT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String DATE_PATTERN = "yyyy-MM-dd";
 
     public static void main(String[] args) {
@@ -25,48 +22,54 @@ public class Main {
 
     public void run(Scanner scanner) {
         LocalDateTime dateAndTime = getDateAndTime(scanner);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN1);
-        System.out.println("Czas lokalny: " + dateAndTime.format(formatter));
-        List<Zone> zones = new ArrayList<>();
-        ZonedDateTime actualZoneTime = dateAndTime.atZone(ZoneId.systemDefault());
-        zones.add(new Zone(UTC_ID, "UTC"));
-        zones.add(new Zone(LONDON_ID, "Londyn"));
-        zones.add(new Zone(LOS_ANGELES_ID, "Los Angeles"));
-        zones.add(new Zone(SYDNEY_ID, "Sydney"));
-        printTimeInZones(zones, formatter, actualZoneTime);
+        printDates(dateAndTime);
+    }
+
+    private void printDates(LocalDateTime dateAndTime) {
+        List<Zone> zones = Arrays.asList(
+                new Zone(ZoneId.systemDefault(), "Czas lokalny"),
+                new Zone(ZoneId.of("UTC"), "UTC"),
+                new Zone(ZoneId.of("Europe/London"), "Londyn"),
+                new Zone(ZoneId.of("America/Los_Angeles"), "Los Angeles"),
+                new Zone(ZoneId.of("Australia/Sydney"), "Sydney"));
+        ZonedDateTime currentTime = dateAndTime.atZone(ZoneId.systemDefault());
+        printTimeInZones(zones, currentTime);
     }
 
     private LocalDateTime getDateAndTime(Scanner scanner) {
         System.out.println("Podaj datę:");
         String dateAndTime = scanner.nextLine();
-        List<DateTimeFormatter> dateTimeFormatters = new ArrayList<>();
+        return parseDate(dateAndTime);
+    }
+
+    private LocalDateTime parseDate(String dateAndTime) {
         List<DateTimeFormatter> dateFormatters = new ArrayList<>();
-        dateTimeFormatters.add(DateTimeFormatter.ofPattern(DATE_TIME_PATTERN1));
         dateFormatters.add(DateTimeFormatter.ofPattern(DATE_PATTERN));
-        dateTimeFormatters.add(DateTimeFormatter.ofPattern(DATE_TIME_PATTERN2));
-        for (DateTimeFormatter formatter : dateTimeFormatters) {
+        for (String format : DATE_TIME_FORMATTERS) {
             try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
                 return LocalDateTime.parse(dateAndTime, formatter);
             } catch (DateTimeParseException e) {
-//                noop
+                // noop
             }
         }
         for (DateTimeFormatter dateTimeFormatter : dateFormatters) {
             try {
                 LocalDate date = LocalDate.parse(dateAndTime, dateTimeFormatter);
-                LocalTime time = LocalTime.of(00, 00, 00);
+                LocalTime time = LocalTime.of(0, 0, 0);
                 return LocalDateTime.of(date, time);
             } catch (DateTimeParseException e) {
-//                noop
+                // noop
             }
         }
         return null;
     }
 
-    private void printTimeInZones(List<Zone> zones, DateTimeFormatter formatter, ZonedDateTime actualTime) {
+    private void printTimeInZones(List<Zone> zones, ZonedDateTime currentTime) {
         for (Zone zone : zones) {
-            System.out.println(zone.getName() + ": " +
-                    actualTime.withZoneSameInstant(ZoneId.of(zone.getId())).format(formatter));
+            ZonedDateTime timeAtGivenZone = currentTime.withZoneSameInstant(zone.getZoneId());
+            String formattedTime = timeAtGivenZone.format(OUTPUT_FORMATTER);
+            System.out.printf("%s: %s\n", zone.getName(), formattedTime);
         }
     }
 }

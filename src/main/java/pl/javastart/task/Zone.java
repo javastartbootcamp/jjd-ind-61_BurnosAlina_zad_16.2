@@ -1,17 +1,19 @@
 package pl.javastart.task;
 
+import java.time.ZoneId;
+
 public class Zone {
 
-    private String id;
+    private ZoneId zoneId;
     private String name;
 
-    public Zone(String id, String name) {
-        this.id = id;
+    public Zone(ZoneId id, String name) {
+        this.zoneId = id;
         this.name = name;
     }
 
-    public String getId() {
-        return id;
+    public ZoneId getZoneId() {
+        return zoneId;
     }
 
     public String getName() {
